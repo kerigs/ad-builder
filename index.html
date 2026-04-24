@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OSCAR Ad Builder</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --blue: #009DE0;
+    --navy: #034461;
+    --yellow: #FBB104;
+    --light: #FAFAF9;
+    --dark: #1C1917;
+    --grey: #f0f2f5;
+    --border: #e2e6ea;
+    --muted: #6b7280;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Poppins', sans-serif;
+    background: #0f1117;
+    color: #fff;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Top bar */
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 32px;
+    background: #161b22;
+    border-bottom: 1px solid #30363d;
+    flex-shrink: 0;
+  }
+
+  .topbar-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .logo {
+    background: var(--blue);
+    color: white;
+    font-size: 16px;
+    font-weight: 800;
+    padding: 6px 14px;
+    border-radius: 6px;
+    letter-spacing: 1px;
+  }
+
+  .topbar-title {
+    font-size: 13px;
+    font-weight: 500;
+    color: #8b949e;
+  }
+
+  .topbar-badge {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--blue);
+    background: rgba(0,157,224,0.12);
+    padding: 3px 10px;
+    border-radius: 20px;
+    border: 1px solid rgba(0,157,224,0.25);
+  }
+
+  /* Main layout */
+  .main {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+    height: calc(100vh - 57px);
+  }
+
+  /* Left panel — controls */
+  .panel {
+    width: 400px;
+    flex-shrink: 0;
+    background: #161b22;
+    border-right: 1px solid #30363d;
+    overflow-y: auto;
+    padding: 24px;
+  }
+
+  .panel::-webkit-scrollbar { width: 4px; }
+  .panel::-webkit-scrollbar-track { background: transparent; }
+  .panel::-webkit-scrollbar-thumb { background: #30363d; border-radius: 4px; }
+
+  /* Right panel — preview */
+  .preview-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: #0d1117;
+    padding: 40px;
+    gap: 24px;
+  }
+
+  .preview-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: #8b949e;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+  }
+
+  .preview-wrapper {
+    width: 450px;
+    height: 450px;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 0 0 1px #30363d, 0 20px 60px rgba(0,0,0,0.5);
+    position: relative;
+  }
+
+  #preview-iframe {
+    width: 1080px;
+    height: 1080px;
+    border: none;
+    transform: scale(0.4167);
+    transform-origin: top left;
+    pointer-events: none;
+  }
+
+  /* Generate button */
+  .generate-btn {
+    padding: 14px 48px;
+    background: var(--blue);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-family: 'Poppins', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .generate-btn:hover { background: #007ab8; transform: translateY(-1px); }
+  .generate-btn:active { transform: translateY(0); }
+  .generate-btn:disabled { background: #30363d; color: #8b949e; cursor: not-allowed; transform: none; }
+
+  .status-msg {
+    font-size: 13px;
+    font-weight: 500;
+    padding: 10px 20px;
+    border-radius: 8px;
+    display: none;
+  }
+  .status-msg.success { background: rgba(16,185,129,0.15); color: #34d399; border: 1px solid rgba(16,185,129,0.25); display: block; }
+  .status-msg.error { background: rgba(239,68,68,0.15); color: #f87171; border: 1px solid rgba(239,68,68,0.25); display: block; }
+  .status-msg.loading { background: rgba(0,157,224,0.15); color: var(--blue); border: 1px solid rgba(0,157,224,0.25); display: block; }
+
+  /* Section headers */
+  .section-title {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: #8b949e;
+    margin-bottom: 14px;
+    margin-top: 24px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #21262d;
+  }
+
+  .section-title:first-child { margin-top: 0; }
+
+  /* JSON paste area */
+  .json-area {
+    width: 100%;
+    background: #0d1117;
+    border: 1.5px solid #30363d;
+    border-radius: 10px;
+    padding: 12px;
+    font-family: 'Courier New', monospace;
+    font-size: 11px;
+    color: #7ee787;
+    resize: vertical;
+    min-height: 100px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+
+  .json-area:focus { border-color: var(--blue); }
+  .json-area::placeholder { color: #30363d; }
+
+  .paste-btn {
+    width: 100%;
+    padding: 10px;
+    background: transparent;
+    border: 1.5px solid #30363d;
+    border-radius: 8px;
+    color: #8b949e;
+    font-family: 'Poppins', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 8px;
+    transition: all 0.15s;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .paste-btn:hover { border-color: var(--blue); color: var(--blue); }
+
+  /* Fields */
+  .field { margin-bottom: 14px; }
+  .field:last-child { margin-bottom: 0; }
+
+  label {
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    color: #8b949e;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin-bottom: 6px;
+  }
+
+  input[type="text"],
+  select {
+    width: 100%;
+    padding: 10px 12px;
+    background: #0d1117;
+    border: 1.5px solid #30363d;
+    border-radius: 8px;
+    font-family: 'Poppins', sans-serif;
+    font-size: 13px;
+    color: #fff;
+    outline: none;
+    appearance: none;
+    transition: border-color 0.15s;
+  }
+
+  input[type="text"]:focus,
+  select:focus { border-color: var(--blue); }
+
+  input[type="text"]::placeholder { color: #30363d; }
+
+  select option { background: #161b22; }
+
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+  /* Market selector */
+  .market-group {
+    display: flex;
+    gap: 8px;
+  }
+
+  .market-btn {
+    flex: 1;
+    padding: 9px;
+    background: #0d1117;
+    border: 1.5px solid #30363d;
+    border-radius: 8px;
+    color: #8b949e;
+    font-family: 'Poppins', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.15s;
+  }
+
+  .market-btn:hover { border-color: #8b949e; }
+  .market-btn.active { border-color: var(--blue); color: var(--blue); background: rgba(0,157,224,0.08); }
+
+  /* Colour selector */
+  .colour-group { display: flex; gap: 8px; }
+
+  .colour-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    background: #0d1117;
+    border: 1.5px solid #30363d;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: 'Poppins', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    color: #8b949e;
+  }
+
+  .colour-btn:hover { border-color: #8b949e; }
+  .colour-btn.active { border-color: #fff; color: #fff; }
+
+  .swatch {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  /* Toggle */
+  .toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 14px;
+    background: #0d1117;
+    border: 1.5px solid #30363d;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    cursor: pointer;
+  }
+
+  .toggle-row:last-child { margin-bottom: 0; }
+
+  .toggle-row-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #8b949e;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .switch {
+    position: relative;
+    width: 40px;
+    height: 22px;
+    flex-shrink: 0;
+  }
+
+  .switch input { display: none; }
+
+  .switch-slider {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: #30363d;
+    border-radius: 22px;
+    transition: 0.2s;
+    cursor: pointer;
+  }
+
+  .switch-slider:before {
+    content: '';
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    left: 3px;
+    top: 3px;
+    background: white;
+    border-radius: 50%;
+    transition: 0.2s;
+  }
+
+  .switch input:checked + .switch-slider { background: var(--blue); }
+  .switch input:checked + .switch-slider:before { transform: translateX(18px); }
+
+  .toggle-content {
+    display: none;
+    padding: 10px 14px 14px;
+    background: #0d1117;
+    border: 1.5px solid #30363d;
+    border-top: none;
+    border-radius: 0 0 8px 8px;
+    margin-top: -8px;
+    margin-bottom: 8px;
+  }
+
+  .toggle-content.active { display: block; }
+  .toggle-content input, .toggle-content select { margin-top: 0; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-left">
+    <div class="logo">OSCAR</div>
+    <span class="topbar-title">Ad Builder</span>
+    <span class="topbar-badge">Type A · 1×1</span>
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- Left panel -->
+  <div class="panel">
+
+    <!-- JSON paste -->
+    <div class="section-title">Paste from Claude</div>
+    <textarea class="json-area" id="json_input" placeholder='Paste JSON from Claude here...'></textarea>
+    <button class="paste-btn" onclick="loadFromJSON()">↓ Load into fields</button>
+
+    <!-- Photo -->
+    <div class="section-title">Background Photo</div>
+    <div class="field">
+      <label>Photo URL</label>
+      <input type="text" id="photo_url" placeholder="https://i.postimg.cc/..." oninput="updatePreview()">
+    </div>
+
+    <!-- Market & Service -->
+    <div class="section-title">Market & Service</div>
+    <div class="field">
+      <label>Market</label>
+      <div class="market-group">
+        <div class="market-btn active" id="btn-PT" onclick="setMarket('PT')">🇵🇹 PT</div>
+        <div class="market-btn" id="btn-ES" onclick="setMarket('ES')">🇪🇸 ES</div>
+        <div class="market-btn" id="btn-UK" onclick="setMarket('UK')">🇬🇧 UK</div>
+      </div>
+    </div>
+    <div class="field">
+      <label>Service Name</label>
+      <input type="text" id="service" placeholder="e.g. LIMPEZA|DE SOFÁ" oninput="updatePreview()">
+    </div>
+
+    <!-- Pricing -->
+    <div class="section-title">Pricing</div>
+    <div class="field">
+      <label>Price Label</label>
+      <select id="price_label" onchange="updatePreview()">
+        <option value="desde">desde</option>
+        <option value="from">from</option>
+        <option value="a partir de">a partir de</option>
+      </select>
+    </div>
+    <div class="row">
+      <div class="field">
+        <label>Main</label>
+        <input type="text" id="price_main" placeholder="21" oninput="updatePreview()">
+      </div>
+      <div class="field">
+        <label>Cents</label>
+        <input type="text" id="price_cents" placeholder=",95" oninput="updatePreview()">
+      </div>
+    </div>
+    <div class="field">
+      <label>Badge Colour</label>
+      <div class="colour-group">
+        <div class="colour-btn active" id="clr-blue" onclick="setColour('#009DE0', 'clr-blue')">
+          <div class="swatch" style="background:#009DE0"></div> Blue
+        </div>
+        <div class="colour-btn" id="clr-yellow" onclick="setColour('#FBB104', 'clr-yellow')">
+          <div class="swatch" style="background:#FBB104"></div> Yellow
+        </div>
+      </div>
+    </div>
+
+    <!-- Optional elements -->
+    <div class="section-title">Optional Elements</div>
+
+    <div class="toggle-row" onclick="toggleOpt('anchor')">
+      <span class="toggle-row-label">Anchor Price</span>
+      <label class="switch" onclick="event.stopPropagation()">
+        <input type="checkbox" id="toggle-anchor" onchange="toggleOpt('anchor')">
+        <span class="switch-slider"></span>
+      </label>
+    </div>
+    <div class="toggle-content" id="content-anchor">
+      <input type="text" id="anchor_price" placeholder="e.g. €39,95" oninput="updatePreview()">
+    </div>
+
+    <div class="toggle-row" onclick="toggleOpt('trust')">
+      <span class="toggle-row-label">Trust Badge</span>
+      <label class="switch" onclick="event.stopPropagation()">
+        <input type="checkbox" id="toggle-trust" onchange="toggleOpt('trust')">
+        <span class="switch-slider"></span>
+      </label>
+    </div>
+    <div class="toggle-content" id="content-trust">
+      <select id="trust_badge_text" onchange="updatePreview()">
+        <option value="PROFISSIONAIS VERIFICADOS">PROFISSIONAIS VERIFICADOS (PT)</option>
+        <option value="PROFESIONALES VERIFICADOS">PROFESIONALES VERIFICADOS (ES)</option>
+        <option value="VETTED PROFESSIONALS">VETTED PROFESSIONALS (UK)</option>
+      </select>
+    </div>
+
+    <div class="toggle-row" onclick="toggleOpt('promo')">
+      <span class="toggle-row-label">Promo Code</span>
+      <label class="switch" onclick="event.stopPropagation()">
+        <input type="checkbox" id="toggle-promo" onchange="toggleOpt('promo')">
+        <span class="switch-slider"></span>
+      </label>
+    </div>
+    <div class="toggle-content" id="content-promo">
+      <input type="text" id="promo_code" placeholder="e.g. LLEGUE50" oninput="updatePreview()">
+    </div>
+
+  </div>
+
+  <!-- Right panel — preview -->
+  <div class="preview-panel">
+    <div class="preview-label">Live Preview</div>
+    <div class="preview-wrapper">
+      <iframe id="preview-iframe" sandbox="allow-same-origin"></iframe>
+    </div>
+    <button class="generate-btn" id="gen-btn" onclick="generateAd()">Generate Ad →</button>
+    <div class="status-msg" id="status-msg"></div>
+  </div>
+
+</div>
+
+<script>
+  const WEBHOOK = 'https://hook.eu1.make.com/1v6v81ae7ppeyoonznn7195ih451tw7t';
+  let selectedMarket = 'PT';
+  let selectedColour = '#009DE0';
+
+  const TEMPLATE = `<!DOCTYPE html><html lang='en'><head><meta charset='UTF-8'><link href='https://fonts.googleapis.com/css2?family=Poppins:wght@700;800;900&display=swap' rel='stylesheet'><style>*{margin:0;padding:0;box-sizing:border-box;}body{width:1080px;height:1080px;overflow:hidden;font-family:'Poppins',sans-serif;}.ad-container{position:relative;width:1080px;height:1080px;overflow:hidden;}.bg-photo{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;object-position:left center;z-index:1;}.overlay{position:absolute;top:0;left:0;width:100%;height:100%;background:linear-gradient(135deg,rgba(0,0,0,0.52) 0%,rgba(0,0,0,0.38) 40%,rgba(0,0,0,0.10) 100%);z-index:2;}.service-headline{position:absolute;top:64px;left:64px;z-index:3;max-width:560px;font-family:'Poppins',sans-serif;font-weight:800;font-size:108px;line-height:1.0;letter-spacing:-1px;text-transform:uppercase;color:#FFFFFF;text-shadow:0px 2px 16px rgba(0,0,0,0.18);}.badge-group{position:absolute;top:300px;left:64px;z-index:3;display:flex;flex-direction:column;align-items:flex-start;}.price-badge{background-color:BADGE_COLOUR_TOKEN;border-radius:28px;padding:20px 44px 20px 36px;display:flex;flex-direction:column;align-items:flex-start;min-width:320px;position:relative;z-index:2;}.price-label{font-family:'Poppins',sans-serif;font-weight:700;font-size:30px;color:#FFFFFF;line-height:1.1;margin-bottom:2px;text-transform:lowercase;}.price-value{font-family:'Poppins',sans-serif;font-weight:900;font-size:136px;color:#FFFFFF;line-height:0.9;letter-spacing:-4px;display:flex;align-items:flex-start;position:relative;}.price-currency{font-weight:700;font-size:120px;margin-right:2px;align-self:center;}.price-main{font-weight:900;}.price-cents{font-weight:700;font-size:56px;line-height:1;margin-top:8px;letter-spacing:-1px;}.anchor-badge{background-color:#034461;border-radius:18px;padding:8px 28px;display:ANCHOR_DISPLAY_TOKEN;align-items:center;position:relative;top:-14px;left:20px;z-index:1;}.anchor-price{font-family:'Poppins',sans-serif;font-weight:800;font-size:60px;color:#FFFFFF;text-decoration:line-through;text-decoration-color:#e8334a;text-decoration-thickness:5px;}.trust-badge{position:absolute;top:64px;right:64px;z-index:3;display:TRUST_DISPLAY_TOKEN;align-items:center;gap:10px;background-color:rgba(220,237,248,0.92);border-radius:100px;padding:12px 24px 12px 16px;}.trust-star{color:#034461;font-size:26px;line-height:1;}.trust-text{font-family:'Poppins',sans-serif;font-weight:700;font-size:22px;color:#034461;text-transform:uppercase;letter-spacing:0.5px;white-space:nowrap;}.promo-badge{position:absolute;bottom:64px;right:64px;z-index:3;display:PROMO_DISPLAY_TOKEN;background-color:#034461;border-radius:16px;padding:12px 28px;}.promo-text{font-family:'Poppins',sans-serif;font-weight:700;font-size:39px;color:#FFFFFF;letter-spacing:1px;}.oscar-logo{position:absolute;bottom:60px;left:64px;z-index:3;height:72px;width:auto;}</style></head><body><div class='ad-container'><img class='bg-photo' src='PHOTO_URL_TOKEN' alt=''><div class='overlay'></div><div class='trust-badge'><span class='trust-star'>★</span><span class='trust-text'>TRUST_TEXT_TOKEN</span></div><div class='service-headline'>SERVICE_TOKEN</div><div class='badge-group'><div class='price-badge'><span class='price-label'>PRICE_LABEL_TOKEN</span><span class='price-value'><span class='price-currency'>CURRENCY_TOKEN</span><span class='price-main'>PRICE_MAIN_TOKEN</span><span class='price-cents'>PRICE_CENTS_TOKEN</span></span></div><div class='anchor-badge'><span class='anchor-price'>ANCHOR_PRICE_TOKEN</span></div></div><div class='promo-badge'><span class='promo-text'>PROMO_CODE_TOKEN</span></div><img class='oscar-logo' src='https://i.postimg.cc/JnKJg3Gw/Company-Logo-1.png' alt='OSCAR'></div></body></html>`;
+
+  function getValues() {
+    const anchorOn = document.getElementById('toggle-anchor').checked;
+    const trustOn = document.getElementById('toggle-trust').checked;
+    const promoOn = document.getElementById('toggle-promo').checked;
+    const serviceRaw = (document.getElementById('service').value || '').toUpperCase();
+    const service = serviceRaw.replace('|', '<br>');
+    const currency = selectedMarket === 'UK' ? '£' : '€';
+
+    return {
+      photo_url: document.getElementById('photo_url').value.trim(),
+      service,
+      price_label: document.getElementById('price_label').value,
+      price_currency: currency,
+      price_main: document.getElementById('price_main').value.trim(),
+      price_cents: document.getElementById('price_cents').value.trim(),
+      badge_colour: selectedColour,
+      anchor_price: anchorOn ? document.getElementById('anchor_price').value.trim() : '',
+      anchor_display: anchorOn ? 'flex' : 'none',
+      trust_badge_text: trustOn ? document.getElementById('trust_badge_text').value : '',
+      trust_display: trustOn ? 'flex' : 'none',
+      promo_code: promoOn ? document.getElementById('promo_code').value.trim() : '',
+      promo_display: promoOn ? 'flex' : 'none',
+    };
+  }
+
+  function buildHTML(v) {
+    return TEMPLATE
+      .replace('PHOTO_URL_TOKEN', v.photo_url || '')
+      .replace('SERVICE_TOKEN', v.service || '')
+      .replace('PRICE_LABEL_TOKEN', v.price_label || '')
+      .replace('CURRENCY_TOKEN', v.price_currency || '')
+      .replace('PRICE_MAIN_TOKEN', v.price_main || '')
+      .replace('PRICE_CENTS_TOKEN', v.price_cents || '')
+      .replace('BADGE_COLOUR_TOKEN', v.badge_colour || '#009DE0')
+      .replace('ANCHOR_PRICE_TOKEN', v.anchor_price || '')
+      .replace('ANCHOR_DISPLAY_TOKEN', v.anchor_display || 'none')
+      .replace('TRUST_TEXT_TOKEN', v.trust_badge_text || '')
+      .replace('TRUST_DISPLAY_TOKEN', v.trust_display || 'none')
+      .replace('PROMO_CODE_TOKEN', v.promo_code || '')
+      .replace('PROMO_DISPLAY_TOKEN', v.promo_display || 'none');
+  }
+
+  function updatePreview() {
+    const v = getValues();
+    const html = buildHTML(v);
+    const iframe = document.getElementById('preview-iframe');
+    const doc = iframe.contentDocument || iframe.contentWindow.document;
+    doc.open();
+    doc.write(html);
+    doc.close();
+  }
+
+  function setMarket(market) {
+    selectedMarket = market;
+    ['PT','ES','UK'].forEach(m => document.getElementById('btn-'+m).classList.remove('active'));
+    document.getElementById('btn-'+market).classList.add('active');
+    // Auto-set price label
+    document.getElementById('price_label').value = market === 'UK' ? 'from' : 'desde';
+    // Auto-set trust badge
+    const trustMap = { PT: 'PROFISSIONAIS VERIFICADOS', ES: 'PROFESIONALES VERIFICADOS', UK: 'VETTED PROFESSIONALS' };
+    document.getElementById('trust_badge_text').value = trustMap[market];
+    updatePreview();
+  }
+
+  function setColour(colour, btnId) {
+    selectedColour = colour;
+    document.querySelectorAll('.colour-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById(btnId).classList.add('active');
+    updatePreview();
+  }
+
+  function toggleOpt(key) {
+    const checkbox = document.getElementById('toggle-' + key);
+    const content = document.getElementById('content-' + key);
+    // If triggered by row click, toggle the checkbox
+    if (document.activeElement !== checkbox) {
+      checkbox.checked = !checkbox.checked;
+    }
+    content.classList.toggle('active', checkbox.checked);
+    updatePreview();
+  }
+
+  function loadFromJSON() {
+    const raw = document.getElementById('json_input').value.trim();
+    if (!raw) return;
+    try {
+      const v = JSON.parse(raw);
+
+      if (v.photo_url) document.getElementById('photo_url').value = v.photo_url;
+      if (v.service) document.getElementById('service').value = v.service.replace('<br>', '|');
+      if (v.price_label) document.getElementById('price_label').value = v.price_label;
+      if (v.price_main) document.getElementById('price_main').value = v.price_main;
+      if (v.price_cents) document.getElementById('price_cents').value = v.price_cents;
+
+      if (v.badge_colour) {
+        selectedColour = v.badge_colour;
+        document.querySelectorAll('.colour-btn').forEach(b => b.classList.remove('active'));
+        if (v.badge_colour === '#FBB104') document.getElementById('clr-yellow').classList.add('active');
+        else document.getElementById('clr-blue').classList.add('active');
+      }
+
+      if (v.price_currency) {
+        const market = v.price_currency === '£' ? 'UK' : (v.price_label === 'desde' ? 'ES' : 'PT');
+        selectedMarket = market;
+        ['PT','ES','UK'].forEach(m => document.getElementById('btn-'+m).classList.remove('active'));
+        document.getElementById('btn-'+market).classList.add('active');
+      }
+
+      // Anchor
+      const anchorOn = v.anchor_display === 'flex';
+      document.getElementById('toggle-anchor').checked = anchorOn;
+      document.getElementById('content-anchor').classList.toggle('active', anchorOn);
+      if (v.anchor_price) document.getElementById('anchor_price').value = v.anchor_price;
+
+      // Trust
+      const trustOn = v.trust_display === 'flex';
+      document.getElementById('toggle-trust').checked = trustOn;
+      document.getElementById('content-trust').classList.toggle('active', trustOn);
+      if (v.trust_badge_text) document.getElementById('trust_badge_text').value = v.trust_badge_text;
+
+      // Promo
+      const promoOn = v.promo_display === 'flex';
+      document.getElementById('toggle-promo').checked = promoOn;
+      document.getElementById('content-promo').classList.toggle('active', promoOn);
+      if (v.promo_code) document.getElementById('promo_code').value = v.promo_code;
+
+      updatePreview();
+    } catch(e) {
+      alert('Invalid JSON — check the format and try again');
+    }
+  }
+
+  async function generateAd() {
+    const btn = document.getElementById('gen-btn');
+    const status = document.getElementById('status-msg');
+    const v = getValues();
+
+    if (!v.photo_url) { showStatus('error', 'Photo URL is required'); return; }
+    if (!v.service) { showStatus('error', 'Service name is required'); return; }
+    if (!v.price_main) { showStatus('error', 'Price is required'); return; }
+
+    btn.disabled = true;
+    showStatus('loading', 'Sending to pipeline...');
+
+    try {
+      await fetch(WEBHOOK, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(v),
+        mode: 'no-cors'
+      });
+      showStatus('success', '✓ Ad sent — check Google Drive in ~30 seconds');
+    } catch(e) {
+      showStatus('error', 'Error: ' + e.message);
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  function showStatus(type, msg) {
+    const el = document.getElementById('status-msg');
+    el.className = 'status-msg ' + type;
+    el.textContent = msg;
+  }
+
+  // Init preview
+  updatePreview();
+</script>
+</body>
+</html>
